@@ -8,6 +8,7 @@
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
 #
+# Fixed a bug by Haonan
 from __future__ import annotations
 
 # Standard Library
@@ -65,7 +66,17 @@ class Pose(Sequence):
 
     def __post_init__(self):
         if self.rotation is not None and self.quaternion is None:
+            if len(self.rotation.shape) > 3:
+                self.batch = self.rotation.shape[0]
+                self.n_goalset = self.rotation.shape[1]
+            elif len(self.rotation.shape) == 3:
+                self.batch = 1
+                self.n_goalset = self.rotation.shape[0]
+            else:
+                self.batch = 1
+                self.n_goalset = 1
             self.quaternion = matrix_to_quaternion(self.rotation)
+            self.quaternion = self.quaternion.reshape(self.batch, self.n_goalset, 4)
         if self.position is not None:
             if len(self.position.shape) > 2:
                 self.n_goalset = self.position.shape[1]
